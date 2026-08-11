@@ -136,8 +136,8 @@ The card is fully configurable through the Lovelace UI editor. Options are organ
 
 Grants the Windy iframe the browser's geolocation permission, so the **radar** overlay's location dot lands on your actual position instead of the IP-based guess (see [Known Limitations](#known-limitations)). Two caveats:
 
-- **HTTPS only.** Geolocation requires a secure context. It has no effect if you reach Home Assistant over plain `http://<local-ip>:8123` — use Nabu Casa, a reverse proxy with TLS, or local TLS. (`http://localhost:8123` counts as secure.)
-- **The browser will prompt.** You get a one-time location request on the Home Assistant origin. That is why the option is off by default.
+- **HTTPS only, and it fails silently.** Geolocation requires a secure context. Over plain `http://<local-ip>:8123` you get _no prompt, no error, and no change_ — the dot simply stays IP-located, which looks exactly like a broken option rather than an unavailable one. If nothing happens, check the address bar first: you need Nabu Casa, a reverse proxy with TLS, or local TLS. (`http://localhost:8123` counts as secure.) The card logs a warning to the browser console in this case.
+- **The browser will prompt.** You get a one-time location request on the Home Assistant origin. That is why the option is off by default. The permission is per-origin, so if you reach Home Assistant on both a local address and a remote one, only the secure origin gets the accurate dot.
 
 ### Full Screen
 
