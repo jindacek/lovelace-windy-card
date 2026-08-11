@@ -2,6 +2,12 @@ default_config:
 
 frontend:
 
+# Drives the conditional-card swap in the "Autoplay Sync (#43)" view.
+input_boolean:
+  windy_play:
+    name: Windy Play
+    icon: mdi:play-circle
+
 lovelace:
   resource_mode: yaml
   dashboards:
