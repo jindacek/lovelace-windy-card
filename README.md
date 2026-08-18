@@ -18,6 +18,8 @@ A Lovelace card that embeds the [Windy.com](https://www.windy.com) interactive w
 - **Interaction Toggle** to lock/unlock map panning and zooming with clear visual state (`lock` / `lock-open-variant`).
 - **Spot Forecast** view for a detailed point forecast at any location
 - **Zone entity support** — point the map at any HA zone automatically
+- **Entity-driven overlay** — switch the weather layer from an HA entity's state
+- **Overlay looping** — cycle through a sequence of weather layers on a timer
 - **Marker & Spot detail** — pin a specific lat/lon for the marker and spot forecast popup
 - **Conditional editor** — elevation and forecast model selectors only appear for compatible layers; map layers and display options are hidden when in `forecast_only` mode.
 - **Accessibility** — Full keyboard navigation support (arrows, Home, End) for the mode switcher tabs.
@@ -27,13 +29,16 @@ A Lovelace card that embeds the [Windy.com](https://www.windy.com) interactive w
 
 ## Localization
 
+- Catalan
+- Chinese (Simplified)
+- Chinese (Traditional)
+- Danish
 - Dutch
 - English
 - French
 - German
 - Italian
 - Spanish
-- Catalan
 
 <details>
 <summary>Contributing Translations</summary>
@@ -41,7 +46,8 @@ A Lovelace card that embeds the [Windy.com](https://www.windy.com) interactive w
 1. Fork the repository on GitHub.
 2. Copy `src/translation/en.json` and rename it to your language code (e.g. `pt.json`).
 3. Translate all values.
-4. Submit a pull request.
+4. Register the file in `src/localize.ts` (import it and add it to the `translations` map, using the language code Home Assistant reports in `hass.language`).
+5. Submit a pull request.
 
 </details>
 
@@ -152,106 +158,108 @@ On touch devices the toolbar buttons are always visible, since there is no hover
 
 ### Available Map Layers (`overlay`)
 
-Below is the list of supported weather overlays for the `overlay` option:
+Below is the list of supported weather overlays for the `overlay` option. The **Value** column is what the visual editor writes into your YAML; the **Alias** column lists the older, friendlier name that the card still accepts and translates for you.
 
 <details>
 <summary>Core Layers (Radar, Satellite, Wind, Temp, Waves, etc.)</summary>
 
-| Value       | Label / Name               | Details                                               |
-| ----------- | -------------------------- | ----------------------------------------------------- |
-| `radar`     | Weather radar              | Real-time weather radar precipitation overlay         |
-| `satellite` | Satellite                  | Real-time high-resolution satellite overlay           |
-| `wind`      | Wind                       | Wind animations at selected altitudes                 |
-| `rain`      | Rain, thunder              | Rain, snow, wet-bulb precipitation with thunderstorms |
-| `temp`      | Temperature                | Air temperature at selected altitudes                 |
-| `clouds`    | Clouds                     | Total cloud cover percentage                          |
-| `waves`     | Waves                      | Combined wind waves and swell height                  |
-| `raincum`   | Rain accumulation          | Accumulated precipitation over a selected timeframe   |
-| `gusts`     | Wind gusts                 | Maximum wind gust speed                               |
-| `windcum`   | Wind accumulation          | Accumulated wind run                                  |
-| `cat`       | Clear air turbulence (CAT) | Turbulence severity index for aviation                |
-| `icing`     | Icing severity             | Aviation ice accumulation index                       |
+| Value        | Alias     | Label / Name               | Details                                               |
+| ------------ | --------- | -------------------------- | ----------------------------------------------------- |
+| `radar`      | —         | Weather radar              | Real-time weather radar precipitation overlay         |
+| `satellite`  | —         | Satellite                  | Real-time high-resolution satellite overlay           |
+| `wind`       | —         | Wind                       | Wind animations at selected altitudes                 |
+| `rain`       | —         | Rain, thunder              | Rain, snow, wet-bulb precipitation with thunderstorms |
+| `temp`       | —         | Temperature                | Air temperature at selected altitudes                 |
+| `clouds`     | —         | Clouds                     | Total cloud cover percentage                          |
+| `waves`      | —         | Waves                      | Combined wind waves and swell height                  |
+| `rainAccu`   | `raincum` | Rain accumulation          | Accumulated precipitation over a selected timeframe   |
+| `gust`       | `gusts`   | Wind gusts                 | Maximum wind gust speed                               |
+| `gustAccu`   | `windcum` | Wind accumulation          | Accumulated wind run                                  |
+| `turbulence` | `cat`     | Clear air turbulence (CAT) | Turbulence severity index for aviation                |
+| `icing`      | —         | Icing severity             | Aviation ice accumulation index                       |
 
 </details>
 
 <details>
 <summary>Atmosphere Layers (Snow, Humidity, Fog, Visibility, Storms, etc.)</summary>
 
-| Value        | Label / Name      | Details                                                              |
-| ------------ | ----------------- | -------------------------------------------------------------------- |
-| `snow`       | New snow          | Expected new snowfall depth accumulation                             |
-| `snowdepth`  | Snow depth        | Total snow cover depth                                               |
-| `ptype`      | Precip. type      | Precipitation classification type (rain, freezing rain, sleet, snow) |
-| `thunder`    | Thunderstorms     | Lighting strikes density indicator                                   |
-| `dewpoint`   | Dew point         | Atmospheric dew point temperature                                    |
-| `rh`         | Humidity          | Relative humidity percentage                                         |
-| `freezing`   | Freezing altitude | Zero-degree isotherm elevation level                                 |
-| `wetbulb`    | Wet-bulb temp.    | Thermodynamic wet-bulb temperature                                   |
-| `fog`        | Fog               | Ground level fog density indicator                                   |
-| `cloudtop`   | Cloud tops        | Top altitude of clouds                                               |
-| `cloudbase`  | Cloud base        | Low-level cloud base altitude                                        |
-| `visibility` | Visibility        | Ground horizontal visibility distance                                |
-| `cap`        | CAPE Index        | Convective Available Potential Energy for storm instability          |
-| `thermals`   | Thermals          | Thermal updraft speed and cloud base for soaring                     |
-| `hclouds`    | High clouds       | High-altitude cloud cover percentage                                 |
-| `mclouds`    | Medium clouds     | Mid-altitude cloud cover percentage                                  |
-| `lclouds`    | Low clouds        | Low-altitude cloud cover percentage                                  |
+| Value         | Alias       | Label / Name      | Details                                                              |
+| ------------- | ----------- | ----------------- | -------------------------------------------------------------------- |
+| `snowAccu`    | `snow`      | New snow          | Expected new snowfall depth accumulation                             |
+| `snowcover`   | `snowdepth` | Snow depth        | Total snow cover depth                                               |
+| `ptype`       | —           | Precip. type      | Precipitation classification type (rain, freezing rain, sleet, snow) |
+| `thunder`     | —           | Thunderstorms     | Lighting strikes density indicator                                   |
+| `dewpoint`    | —           | Dew point         | Atmospheric dew point temperature                                    |
+| `rh`          | —           | Humidity          | Relative humidity percentage                                         |
+| `deg0`        | `freezing`  | Freezing altitude | Zero-degree isotherm elevation level                                 |
+| `wetbulbtemp` | `wetbulb`   | Wet-bulb temp.    | Thermodynamic wet-bulb temperature                                   |
+| `fog`         | —           | Fog               | Ground level fog density indicator                                   |
+| `cloudtop`    | —           | Cloud tops        | Top altitude of clouds                                               |
+| `cbase`       | `cloudbase` | Cloud base        | Low-level cloud base altitude                                        |
+| `visibility`  | —           | Visibility        | Ground horizontal visibility distance                                |
+| `cape`        | `cap`       | CAPE Index        | Convective Available Potential Energy for storm instability          |
+| `ccl`         | `thermals`  | Thermals          | Thermal updraft speed and cloud base for soaring                     |
+| `hclouds`     | —           | High clouds       | High-altitude cloud cover percentage                                 |
+| `mclouds`     | —           | Medium clouds     | Mid-altitude cloud cover percentage                                  |
+| `lclouds`     | —           | Low clouds        | Low-altitude cloud cover percentage                                  |
 
 </details>
 
 <details>
 <summary>Solar & UV Layers (Solar Power, UV Index)</summary>
 
-| Value        | Label / Name | Details                               |
-| ------------ | ------------ | ------------------------------------- |
-| `solarpower` | Solar power  | Clear-sky downward solar radiation    |
-| `uv`         | UV Index     | Ultraviolet radiation intensity index |
+| Value        | Alias | Label / Name | Details                               |
+| ------------ | ----- | ------------ | ------------------------------------- |
+| `solarpower` | —     | Solar power  | Clear-sky downward solar radiation    |
+| `uvindex`    | `uv`  | UV Index     | Ultraviolet radiation intensity index |
 
 </details>
 
 <details>
 <summary>Ocean Layers (Swell, Wind Waves, Currents, Sea Temp)</summary>
 
-| Value           | Label / Name    | Details                                   |
-| --------------- | --------------- | ----------------------------------------- |
-| `swell`         | Swell           | Primary swell wave height and direction   |
-| `swell2`        | Swell 2         | Secondary swell wave height and direction |
-| `swell3`        | Swell 3         | Tertiary swell wave height and direction  |
-| `wwave`         | Wind waves      | Wind-generated local wave height          |
-| `sst`           | Sea temperature | Sea surface temperature (SST)             |
-| `currents`      | Currents        | Sea current speed and direction           |
-| `tidalcurrents` | Tidal currents  | Local tide-driven current animations      |
+| Value          | Alias           | Label / Name    | Details                                   |
+| -------------- | --------------- | --------------- | ----------------------------------------- |
+| `swell1`       | `swell`         | Swell           | Primary swell wave height and direction   |
+| `swell2`       | —               | Swell 2         | Secondary swell wave height and direction |
+| `swell3`       | —               | Swell 3         | Tertiary swell wave height and direction  |
+| `wwaves`       | `wwave`         | Wind waves      | Wind-generated local wave height          |
+| `sst`          | —               | Sea temperature | Sea surface temperature (SST)             |
+| `currents`     | —               | Currents        | Sea current speed and direction           |
+| `currentsTide` | `tidalcurrents` | Tidal currents  | Local tide-driven current animations      |
 
 </details>
 
 <details>
 <summary>Air Quality Layers (Particulates, Ozone, NO2, SO2, Dust, etc.)</summary>
 
-| Value          | Label / Name     | Details                                       |
-| -------------- | ---------------- | --------------------------------------------- |
-| `no2`          | NO2              | Nitrogen dioxide surface concentration        |
-| `pm25`         | PM2.5            | Fine particulate matter under 2.5 micrometers |
-| `aerosol`      | Aerosol          | Aerosol optical depth (AOD) at 550nm          |
-| `ozone`        | Ozone layer      | Total column ozone layer density              |
-| `so2`          | SO2              | Sulfur dioxide surface concentration          |
-| `surfaceozone` | Surface Ozone    | Ground-level ozone concentration              |
-| `co`           | CO concentration | Carbon monoxide surface concentration         |
-| `dust`         | Dust mass        | Total column atmospheric dust mass            |
+| Value    | Alias          | Label / Name     | Details                                       |
+| -------- | -------------- | ---------------- | --------------------------------------------- |
+| `no2`    | —              | NO2              | Nitrogen dioxide surface concentration        |
+| `pm2p5`  | `pm25`         | PM2.5            | Fine particulate matter under 2.5 micrometers |
+| `aod550` | `aerosol`      | Aerosol          | Aerosol optical depth (AOD) at 550nm          |
+| `gtco3`  | `ozone`        | Ozone layer      | Total column ozone layer density              |
+| `tcso2`  | `so2`          | SO2              | Sulfur dioxide surface concentration          |
+| `go3`    | `surfaceozone` | Surface Ozone    | Ground-level ozone concentration              |
+| `cosc`   | `co`           | CO concentration | Carbon monoxide surface concentration         |
+| `dustsm` | `dust`         | Dust mass        | Total column atmospheric dust mass            |
 
 </details>
 
 <details>
 <summary>Other Layers (Pressure, Anomalies, Alerts, Drought, Fire)</summary>
 
-| Value      | Label / Name       | Details                                          |
-| ---------- | ------------------ | ------------------------------------------------ |
-| `pressure` | Pressure           | Sea-level atmospheric pressure isolines          |
-| `extreme`  | Extreme forecast   | EFI (Extreme Forecast Index) anomalies indicator |
-| `warnings` | Weather warnings   | Meteorological alerts overlay (CAP alerts)       |
-| `drought`  | Drought monitoring | Soil moisture anomaly indicator                  |
-| `fire`     | Fire danger        | Fire Weather Index (FWI) risk level              |
+| Value       | Alias      | Label / Name       | Details                                          |
+| ----------- | ---------- | ------------------ | ------------------------------------------------ |
+| `pressure`  | —          | Pressure           | Sea-level atmospheric pressure isolines          |
+| `efiWind`   | `extreme`  | Extreme forecast   | EFI (Extreme Forecast Index) anomalies indicator |
+| `capAlerts` | `warnings` | Weather warnings   | Meteorological alerts overlay (CAP alerts)       |
+| `drought40` | `drought`  | Drought monitoring | Soil moisture anomaly indicator                  |
+| `fwi`       | `fire`     | Fire danger        | Fire Weather Index (FWI) risk level              |
 
 </details>
+
+Overlay values are matched case-insensitively, so `rainaccu` and `rainAccu` both work. A few Windy overlay ids that the editor does not offer are recognised too and can be set by hand: `efiTemp`, `efiRain`, `soilMoisture40`, `soilMoisture100`, `moistureAnom40` and `moistureAnom100`. Any other value is lower-cased and handed to Windy as-is.
 
 ### Available Forecast Models (`product` / `forecast_product`)
 
