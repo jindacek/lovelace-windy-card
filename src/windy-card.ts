@@ -28,6 +28,7 @@ export class WindyCard extends LitElement implements LovelaceCard {
   private _bypassThrottle: boolean = false;
   private _loopTimer?: ReturnType<typeof setInterval>;
   private _lastLoopParams?: { overlays: string[]; delay: number };
+  private _insecureContextWarned: boolean = false;
 
   public setConfig(config: WindyCardConfig): void {
     if (!config) {
@@ -65,10 +66,28 @@ export class WindyCard extends LitElement implements LovelaceCard {
     this._isStatic = !!newConfig.static_map;
     this._bypassThrottle = true;
     this._updateUrls(true);
+    this._warnIfInsecureContext();
+  }
+
+  /**
+   * Outside a secure context the browser drops the delegated geolocation permission
+   * without a prompt, an error, or any visible change, so the option looks broken
+   * rather than unavailable. Say so once per card instead of failing silently.
+   */
+  private _warnIfInsecureContext(): void {
+    if (this._insecureContextWarned || !this._config?.allow_geolocation || window.isSecureContext) {
+      return;
+    }
+    this._insecureContextWarned = true;
+    console.warn(
+      `${ELEMENT_NAME}: "allow_geolocation" has no effect on ${window.location.origin} because it is not a secure context. ` +
+        'Browsers only grant geolocation over HTTPS (or localhost), so Windy keeps locating the viewer by IP address.',
+    );
   }
 
   public connectedCallback(): void {
     super.connectedCallback();
+    this._warnIfInsecureContext();
     this._setupLoopTimer();
     document.addEventListener('fullscreenchange', this._handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', this._handleFullscreenChange);

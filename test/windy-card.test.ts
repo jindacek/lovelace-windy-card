@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render } from 'lit';
 import '../src/windy-card.js';
 import { WindyCard } from '../src/windy-card.js';
@@ -510,6 +510,52 @@ describe('WindyCard', () => {
       expect(renderIframe(makeCard({ aspect_ratio: '16:9' }))?.hasAttribute('allow')).toBe(false);
       expect(renderIframe(makeCard({ aspect_ratio: '', height: 400 }))?.hasAttribute('allow')).toBe(false);
       expect(renderIframe(makeCard({ allow_geolocation: false }))?.hasAttribute('allow')).toBe(false);
+    });
+  });
+
+  describe('allow_geolocation — insecure context warning', () => {
+    // jsdom does not define isSecureContext at all, so every case sets it explicitly.
+    function setSecureContext(value: boolean): void {
+      Object.defineProperty(window, 'isSecureContext', { value, configurable: true });
+    }
+
+    afterEach(() => {
+      setSecureContext(true);
+      vi.restoreAllMocks();
+    });
+
+    it('warns when the option is on but the context is not secure', () => {
+      setSecureContext(false);
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      makeCard({ allow_geolocation: true });
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).toContain('allow_geolocation');
+      expect(warn.mock.calls[0][0]).toContain('secure context');
+    });
+
+    it('stays silent in a secure context', () => {
+      setSecureContext(true);
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      makeCard({ allow_geolocation: true });
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('stays silent when the option is off, however insecure the context', () => {
+      setSecureContext(false);
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      makeCard({});
+      makeCard({ allow_geolocation: false });
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('warns only once per card, not on every setConfig', () => {
+      setSecureContext(false);
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const card = makeCard({ allow_geolocation: true });
+      card.setConfig({ type: 'custom:windy-card', allow_geolocation: true, zoom: 8 });
+      card.setConfig({ type: 'custom:windy-card', allow_geolocation: true, zoom: 9 });
+      card.connectedCallback();
+      expect(warn).toHaveBeenCalledTimes(1);
     });
   });
 

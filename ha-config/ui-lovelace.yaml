@@ -27,3 +27,67 @@ views:
         aspect_ratio: '16:9'
         static_map: true
         allow_geolocation: true
+
+  # stooky01's proposed workaround from issue #43, rebuilt verbatim: each position
+  # exists twice, and one input_boolean swaps the autoplay:false pair for the
+  # autoplay:true pair. Tests whether HA's conditional card reloads the embeds.
+  # Panel view on purpose. In a masonry view every HIDDEN conditional card still gets
+  # its own column (it stays in `cards`, so the empty-column cleanup skips it), which
+  # leaves a blank gap that moves around whenever the boolean flips. A panel view
+  # renders exactly one card at full width, so there is no column algorithm involved.
+  - title: Autoplay Sync (#43)
+    type: panel
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: Central control
+            entities:
+              - entity: input_boolean.windy_play
+                name: Start both animations
+
+          - type: conditional
+            conditions:
+              - entity: input_boolean.windy_play
+                state: 'off'
+            card:
+              type: horizontal-stack
+              cards:
+                - type: custom:windy-card
+                  title: Radar — idle
+                  default_mode: map_only
+                  overlay: radar
+                  zoom: 7
+                  aspect_ratio: '16:9'
+                  static_map: true
+                - type: custom:windy-card
+                  title: Clouds — idle
+                  default_mode: map_only
+                  overlay: clouds
+                  zoom: 7
+                  aspect_ratio: '16:9'
+                  static_map: true
+
+          - type: conditional
+            conditions:
+              - entity: input_boolean.windy_play
+                state: 'on'
+            card:
+              type: horizontal-stack
+              cards:
+                - type: custom:windy-card
+                  title: Radar — playing
+                  default_mode: map_only
+                  overlay: radar
+                  zoom: 7
+                  aspect_ratio: '16:9'
+                  static_map: true
+                  autoplay: true
+                - type: custom:windy-card
+                  title: Clouds — playing
+                  default_mode: map_only
+                  overlay: clouds
+                  zoom: 7
+                  aspect_ratio: '16:9'
+                  static_map: true
+                  autoplay: true
