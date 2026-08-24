@@ -72,6 +72,9 @@ iframe {
 .iframe-container {
   position: relative;
   width: 100%;
+  // Contains .action-buttons' z-index so it can't escape to the document root and
+  // paint over the host page's own fixed-position UI (e.g. HA's header) (#47).
+  isolation: isolate;
 
   .action-buttons {
     position: absolute;
