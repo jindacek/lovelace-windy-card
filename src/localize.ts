@@ -14,6 +14,7 @@ import zh_Hant from './translation/zh-Hant.json';
 
 const translations = {
   ca,
+  cs,
   da,
   de,
   en,
