@@ -1,6 +1,7 @@
 import { HomeAssistant } from './types';
 
 import ca from './translation/ca.json';
+import cs from './translation/cs.json';
 import da from './translation/da.json';
 import de from './translation/de.json';
 import en from './translation/en.json';
